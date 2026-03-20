@@ -17,48 +17,49 @@
             padding: 0;
         }
         
-        /* Вертикальный формат А5 (524x744 px) */
+        /* Жестко фиксированный формат А5 (524x744 px) */
         .ticket-capture-area {
             width: 524px;
             height: 744px;
             background: #D12F22;
-            padding: 25px;
+            padding: 30px;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
             position: relative;
             color: white;
-            overflow: hidden; /* Важно для обрезки */
+            /* Отключаем любые системные масштабирования */
+            -webkit-text-size-adjust: none;
+            text-size-adjust: none;
         }
 
         .dotted-line {
             border-top: 3px dotted white;
             width: 100%;
-            margin: 8px 0;
-            opacity: 0.8;
+            margin: 10px 0;
             height: 0;
         }
 
-        /* Заголовок ЛОТЕРЕЯ */
         .main-title {
-            font-size: 82px;
+            font-size: 80px;
             font-weight: 900;
-            line-height: 0.85;
+            line-height: 1;
             text-align: center;
             letter-spacing: -2px;
-            margin: 4px 0;
+            margin: 5px 0;
             color: white;
+            text-transform: uppercase;
         }
 
-        /* Сетка */
+        /* Сетка с фиксированными размерами */
         .bingo-grid {
             display: grid;
             grid-template-columns: repeat(5, 90px);
-            grid-template-rows: repeat(5, 88px);
-            gap: 6px;
-            width: 100%;
+            grid-template-rows: repeat(5, 85px);
+            gap: 4px;
+            width: 466px; 
             justify-content: center;
-            margin-top: 12px;
+            margin: 15px auto 0 auto;
         }
 
         .bingo-cell {
@@ -67,9 +68,9 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 4px;
+            padding: 5px;
             box-sizing: border-box;
-            height: 88px;
+            height: 85px;
             width: 90px;
         }
 
@@ -79,56 +80,48 @@
             font-weight: 700;
             color: #D12F22;
             width: 100%;
-            display: block;
-            margin: 0;
-            overflow: hidden;
             word-wrap: break-word;
+            display: block;
         }
 
-        /* Подвал */
         .ticket-footer {
             margin-top: auto;
-            padding-bottom: 10px;
+            padding-top: 20px;
         }
 
         .footer-icons {
             display: flex;
             justify-content: space-between;
-            margin-top: 15px;
+            margin-top: 20px;
             padding: 0 10px;
         }
 
         .icon-box {
-            width: 54px;
-            height: 54px;
+            width: 50px;
+            height: 50px;
             border: 1px solid rgba(255,255,255,0.4);
             position: relative;
             background: rgba(255,255,255,0.1);
-            box-sizing: border-box;
         }
 
-        .icon-box::after {
-            content: '';
-            position: absolute;
-            background: white;
-        }
+        /* Более надежная отрисовка линий для иконок */
+        .line-v { width: 2px; height: 100%; background: white; position: absolute; left: 50%; transform: translateX(-50%); }
+        .line-h { height: 2px; width: 100%; background: white; position: absolute; top: 50%; transform: translateY(-50%); }
+        .line-d1 { height: 2px; width: 130%; background: white; position: absolute; top: 50%; left: -15%; transform: rotate(45deg); }
+        .line-d2 { height: 2px; width: 130%; background: white; position: absolute; top: 50%; left: -15%; transform: rotate(-45deg); }
 
-        .icon-line-v::after { width: 2px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
-        .icon-line-h::after { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
-        .icon-line-d1::after { width: 130%; height: 2px; top: 50%; left: -15%; transform: rotate(45deg); }
-        .icon-line-d2::after { width: 130%; height: 2px; top: 50%; left: -15%; transform: rotate(-45deg); }
-
+        /* Контейнер предпросмотра с прокруткой вместо сжатия */
         .preview-wrapper {
-            overflow: hidden;
             width: 100%;
-            display: flex;
-            justify-content: center;
+            overflow-x: auto;
             background: #cbd5e1;
             padding: 40px 0;
+            display: flex;
+            justify-content: flex-start; /* Для мобильных */
         }
-
-        .preview-scaler {
-            transform-origin: top center;
+        
+        @media (min-width: 600px) {
+            .preview-wrapper { justify-content: center; }
         }
 
         .input-scroll {
@@ -145,29 +138,24 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-10 text-center">
             <h1 class="text-3xl font-extrabold text-slate-900 uppercase tracking-tighter">Генератор Музыкальной Лотереи</h1>
-            <p class="text-slate-500 mt-2">Вертикальный дизайн A5 (524x744 px)</p>
+            <p class="text-slate-500 mt-2">Фиксированный шаблон А5 (524x744 px)</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-            <!-- Плейлист -->
+            <!-- Ввод песен -->
             <div class="lg:col-span-8 bg-white p-6 shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
                     <h2 class="font-bold text-slate-700 uppercase text-sm tracking-widest">Плейлист (50 песен)</h2>
-                    <span class="text-[10px] text-slate-400">СЕТКА 5x5</span>
                 </div>
-                <div id="playlistContainer" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 input-scroll pr-2">
-                    <!-- Заполняется JS -->
-                </div>
+                <div id="playlistContainer" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 input-scroll pr-2"></div>
             </div>
 
-            <!-- Пустышки и кнопки -->
+            <!-- Пустышки и управление -->
             <div class="lg:col-span-4 bg-white p-6 shadow-sm border border-slate-200 h-fit">
                 <h2 class="font-bold text-slate-700 mb-4 border-b pb-2 uppercase text-sm tracking-widest">Пустышки (10 шт)</h2>
-                <div id="dummiesContainer" class="space-y-2">
-                    <!-- Заполняется JS -->
-                </div>
+                <div id="dummiesContainer" class="space-y-2 mb-8"></div>
                 
-                <div class="mt-8 space-y-3">
+                <div class="space-y-3">
                     <button onclick="generateAll()" class="w-full bg-slate-900 hover:bg-black text-white py-4 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> Сгенерировать
                     </button>
@@ -178,9 +166,7 @@
             </div>
         </div>
 
-        <div id="ticketsDisplay" class="grid grid-cols-1 gap-10">
-            <!-- Билеты появятся здесь -->
-        </div>
+        <div id="ticketsDisplay" class="grid grid-cols-1 gap-10"></div>
     </div>
 
     <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded shadow-2xl transition-all opacity-0 pointer-events-none z-50 font-bold uppercase text-xs tracking-widest"></div>
@@ -212,18 +198,17 @@
                     <div class="flex items-center gap-2">
                         <span class="text-[9px] w-4 text-slate-400 font-mono">${i+1}.</span>
                         <input type="text" class="song-input flex-1 p-2 text-xs border ${isSpecial ? 'border-amber-300 bg-amber-50' : 'border-slate-200'} focus:outline-none focus:border-slate-900" 
-                        value="${initialSongs[i] || ''}" placeholder="Исполнитель — Песня">
+                        value="${initialSongs[i] || ''}">
                     </div>
                 `;
             }
-
             const dCont = document.getElementById('dummiesContainer');
             for(let i=0; i<10; i++) {
                 dCont.innerHTML += `
                     <div class="flex items-center gap-2">
                         <span class="text-[9px] w-4 text-slate-400 font-mono">${i+1}.</span>
                         <input type="text" class="dummy-input flex-1 p-2 text-xs border border-slate-200 focus:outline-none focus:border-slate-900" 
-                        value="${initialDummies[i] || ''}" placeholder="Пустышка">
+                        value="${initialDummies[i] || ''}">
                     </div>
                 `;
             }
@@ -251,7 +236,7 @@
             const playlist = Array.from(document.querySelectorAll('.song-input')).map(i => i.value.trim()).filter(v => v);
             const dummies = Array.from(document.querySelectorAll('.dummy-input')).map(i => i.value.trim()).filter(v => v);
 
-            if (playlist.length < 50 || dummies.length < 10) return showToast("Заполните все 50 песен и 10 пустышек!");
+            if (playlist.length < 50 || dummies.length < 10) return showToast("Заполните списки!");
 
             const display = document.getElementById('ticketsDisplay');
             display.innerHTML = '';
@@ -260,8 +245,7 @@
                 const gridData = createGridData(i, playlist, dummies);
                 display.appendChild(renderTicketUI(i, gridData));
             }
-            applyPreviewScaling();
-            showToast("20 билетов сгенерировано!");
+            showToast("20 билетов создано!");
         }
 
         function createGridData(id, playlist, dummies) {
@@ -297,20 +281,20 @@
 
         function renderTicketUI(num, data) {
             const wrapper = document.createElement('div');
-            wrapper.className = "bg-white border border-slate-200 overflow-hidden shadow-sm";
+            wrapper.className = "bg-white border border-slate-200 shadow-sm";
             let meta = "";
             if(num === 1) meta = "Победитель R1";
             if(num === 2 || num === 3) meta = "Победитель R2";
             if(num === 4) meta = "Победитель R3";
 
             wrapper.innerHTML = `
-                <div class="p-3 flex justify-between items-center bg-slate-50 border-b border-slate-200">
-                    <span class="text-[10px] font-bold uppercase text-slate-500">Билет №${num} <span class="text-indigo-600 ml-2 font-black">${meta}</span></span>
-                    <button onclick="downloadOne(this.parentElement.nextElementSibling.firstElementChild, ${num})" class="bg-indigo-600 text-white px-3 py-1 text-[9px] font-bold uppercase rounded hover:bg-indigo-700 transition-colors">PNG</button>
+                <div class="p-3 flex justify-between items-center bg-slate-50 border-b">
+                    <span class="text-[10px] font-bold uppercase text-slate-500">Билет №${num} <span class="text-indigo-600 ml-2">${meta}</span></span>
+                    <button onclick="downloadOne(this.parentElement.nextElementSibling.firstElementChild, ${num})" class="bg-indigo-600 text-white px-4 py-1 text-[9px] font-bold uppercase rounded">PNG</button>
                 </div>
                 
                 <div class="preview-wrapper">
-                    <div id="capture-${num}" class="ticket-capture-area preview-scaler">
+                    <div id="capture-${num}" class="ticket-capture-area">
                         <div class="flex justify-between items-center text-[8px] font-black uppercase tracking-widest opacity-90">
                             <span>ПРОХОДНАЯ</span>
                             <span>ПРОФСОЮЗНАЯ МУЗЫКАЛЬНАЯ</span>
@@ -330,12 +314,12 @@
                         </div>
 
                         <div class="ticket-footer">
-                            <p class="text-[8px] font-black uppercase leading-tight tracking-tighter opacity-100">СЛУШАЙ МУЗЫКУ, УГАДЫВАЙ ИСПОЛНИТЕЛЯ И ВЫЧЁРКИВАЙ НАЗВАНИЯ!</p>
+                            <p class="text-[8px] font-black uppercase tracking-tighter text-center">СЛУШАЙ МУЗЫКУ, УГАДЫВАЙ ИСПОЛНИТЕЛЯ И ВЫЧЁРКИВАЙ НАЗВАНИЯ!</p>
                             <div class="footer-icons">
-                                <div class="icon-box icon-line-v"></div>
-                                <div class="icon-box icon-line-h"></div>
-                                <div class="icon-box icon-line-d1"></div>
-                                <div class="icon-box icon-line-d2"></div>
+                                <div class="icon-box"><div class="line-v"></div></div>
+                                <div class="icon-box"><div class="line-h"></div></div>
+                                <div class="icon-box"><div class="line-d1"></div></div>
+                                <div class="icon-box"><div class="line-d2"></div></div>
                             </div>
                         </div>
                     </div>
@@ -344,65 +328,35 @@
             return wrapper;
         }
 
-        function applyPreviewScaling() {
-            const scalers = document.querySelectorAll('.preview-scaler');
-            const wrapper = document.querySelector('.preview-wrapper');
-            if(!wrapper || !scalers.length) return;
-            const availableWidth = wrapper.offsetWidth - 80;
-            const scale = Math.min(1, availableWidth / 524);
-            scalers.forEach(s => {
-                s.style.transform = `scale(${scale})`;
-                s.parentElement.style.height = (744 * scale) + "px";
-            });
-        }
-
         async function downloadOne(el, num) {
-            // Чтобы избежать смещения при захвате, сбрасываем масштаб и прокрутку
-            const originalTransform = el.style.transform;
-            const originalParentHeight = el.parentElement.style.height;
-            
-            el.style.transform = 'none';
-            el.parentElement.style.height = 'auto';
-            
-            // Ждем завершения перерисовки
-            await new Promise(r => setTimeout(r, 100));
-
             try {
+                // Прямой захват без манипуляций с масштабом
                 const canvas = await html2canvas(el, { 
-                    scale: 2, 
-                    width: 524, 
-                    height: 744, 
+                    scale: 2, // Для высокого качества
                     logging: false, 
                     useCORS: true,
-                    backgroundColor: '#D12F22',
-                    scrollX: 0,
-                    scrollY: -window.scrollY // Компенсируем прокрутку страницы
+                    backgroundColor: '#D12F22'
                 });
                 
                 const link = document.createElement('a');
-                link.download = `билет_№${num}.png`;
+                link.download = `лотерея_билет_№${num}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             } catch (err) {
-                showToast("Ошибка при скачивании");
-            } finally {
-                // Возвращаем масштаб для интерфейса
-                el.style.transform = originalTransform;
-                el.parentElement.style.height = originalParentHeight;
+                showToast("Ошибка сохранения");
             }
         }
 
         async function downloadAsImages() {
-            showToast("Подготовка архива...");
+            showToast("Загрузка пошла...");
             const tickets = document.querySelectorAll('.ticket-capture-area');
             for(let i=0; i<tickets.length; i++) {
-                await new Promise(r => setTimeout(r, 600)); 
+                await new Promise(r => setTimeout(r, 800)); 
                 await downloadOne(tickets[i], i+1);
             }
-            showToast("Все билеты загружены!");
+            showToast("Готово!");
         }
 
-        window.addEventListener('resize', applyPreviewScaling);
         window.onload = () => { initInputs(); generateAll(); };
     </script>
 </body>
