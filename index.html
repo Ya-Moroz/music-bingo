@@ -23,43 +23,45 @@
             flex-shrink: 0;
         }
 
-        /* Фиксированная сетка: ячейки всегда одного размера */
+        /* Фиксированная сетка */
         .bingo-grid {
             display: grid;
-            grid-template-columns: repeat(5, 132px); /* 132 * 5 + gaps = ~670px */
-            grid-template-rows: repeat(5, 64px);  /* 64 * 5 + gaps = ~330px */
+            grid-template-columns: repeat(5, 132px);
+            grid-template-rows: repeat(5, 64px);
             gap: 4px;
-            width: 664px; /* Фиксированная ширина сетки */
-            height: 336px; /* Фиксированная высота сетки */
+            width: 676px; 
+            height: 336px;
             margin: 0 auto;
         }
 
         .bingo-cell {
             border: 1px solid #cbd5e1;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: center;      /* Вертикальное центрирование */
+            justify-content: center;   /* Горизонтальное центрирование */
             text-align: center;
-            padding: 4px;
-            width: 132px;  /* Фиксированная ширина ячейки */
-            height: 64px;  /* Фиксированная высота ячейки */
+            padding: 6px;
+            width: 132px;
+            height: 64px;
             background: #fff;
             overflow: hidden;
             box-sizing: border-box;
+            position: relative;
         }
 
         .bingo-cell span {
             font-size: 10px;
-            line-height: 1.1;
+            line-height: 1.2;
             font-weight: 600;
             color: #1e293b;
             word-wrap: break-word;
-            display: -webkit-box;
-            -webkit-line-clamp: 4;
-            -webkit-box-orient: vertical;
+            width: 100%;
+            margin: auto; /* Помогает html2canvas с центровкой внутри flex */
+            display: block;
+            max-height: 52px; /* Ограничение высоты текста внутри ячейки */
         }
 
-        /* Контейнер для предпросмотра на сайте (масштабируется под экран) */
+        /* Контейнер для предпросмотра на сайте */
         .preview-wrapper {
             overflow: hidden;
             width: 100%;
@@ -293,22 +295,21 @@
             
             scalers.forEach(s => {
                 s.style.transform = `scale(${scale})`;
-                // Корректируем высоту родителя, так как transform:scale не меняет поток документа
                 s.parentElement.style.height = (524 * scale) + "px";
             });
         }
 
         async function downloadOne(el, num) {
-            // Перед захватом временно убираем трансформацию, чтобы получить чистый размер
             const originalTransform = el.style.transform;
             el.style.transform = 'none';
             
             const canvas = await html2canvas(el, { 
-                scale: 1, // Строго 1:1 к пикселям в CSS
+                scale: 2, // Повышаем качество для четкости текста
                 width: 744,
                 height: 524,
                 logging: false,
-                useCORS: true
+                useCORS: true,
+                backgroundColor: '#ffffff'
             });
             
             el.style.transform = originalTransform;
@@ -323,7 +324,7 @@
             showToast("Подготовка всех билетов...");
             const tickets = document.querySelectorAll('.ticket-capture-area');
             for(let i=0; i<tickets.length; i++) {
-                await new Promise(r => setTimeout(r, 300));
+                await new Promise(r => setTimeout(r, 400));
                 await downloadOne(tickets[i], i+1);
             }
             showToast("Все билеты скачаны!");
