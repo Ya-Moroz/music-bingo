@@ -36,28 +36,28 @@
 
         .bingo-cell {
             border: 1px solid #cbd5e1;
-            display: flex;
-            align-items: center;      /* Вертикальное центрирование */
-            justify-content: center;   /* Горизонтальное центрирование */
-            text-align: center;
-            padding: 0 6px;            /* Убираем вертикальный паддинг для точности */
             width: 132px;
             height: 64px;
             background: #fff;
-            overflow: hidden;
             box-sizing: border-box;
+            /* Используем табличный метод для гарантированного центрирования в html2canvas */
+            display: table;
+            table-layout: fixed;
+            padding: 0;
         }
 
         .bingo-cell span {
+            display: table-cell;
+            vertical-align: middle; /* Идеальное вертикальное центрирование */
+            text-align: center;
             font-size: 10px;
-            line-height: 1.1;         /* Фиксированный интервал */
+            line-height: 1.2;
             font-weight: 600;
             color: #1e293b;
             word-wrap: break-word;
-            width: 100%;
-            display: block;
-            margin: 0;                /* Убираем margin auto для стабильности в canvas */
-            padding: 0;
+            padding: 4px 6px;
+            height: 64px;
+            width: 132px;
         }
 
         /* Контейнер для предпросмотра на сайте */
@@ -133,7 +133,7 @@
             "Zoloto — Дома", "Hi Fi — Не дано", "Cream Soda — Отпускаю", "Тимати — Понты", "Quest Pistols — Ты так красива",
             "Сплин — Остаемся зимовать", "ЛСП — безумие", "Fergie — London Bridge", "Бумбокс — Хоттабыч", "Алена Свиридова — Розовый фламинго",
             "Монеточка — Селфхарм", "Кровосток — Весна", "Ramil — Сон", "Дмитрий Маликов — Ты одна ты такая", "Ваня Дмитриенко — Вишневый",
-            "ICEGERGERT — G woman", "Бузова — Мало половин", "Арсен Шахунц — Девочка, стоп", "Бьянка — че че", "Глюкоза — Глюкоза Ностра",
+            "ICEGERGERT — G woman", "Бузова — Мало половин", "Арсен Шахунц — Девочка, stop", "Бьянка — че че", "Глюкоза — Глюкоза Ностра",
             "Reamonn — Supergirl", "Клава Кока — Покинула чат", "Eminem — Without me", "Руки вверх — Он тебя целует", "Серебро — В космосе",
             "Тимати — Хавчик", "Агата кристи — Черная луна", "Ноггано — Девочка", "Jakone — По весне", "Rozhden — Знаешь",
             "Баста — Вечно молодой", "Фабрика — Про любовь", "INSTASAMKA — За деньги да", "Максим — Ветром стать", "L one — Все или ничего",
@@ -303,7 +303,7 @@
             el.style.transform = 'none';
             
             const canvas = await html2canvas(el, { 
-                scale: 2, // Повышаем качество для четкости текста
+                scale: 2, 
                 width: 744,
                 height: 524,
                 logging: false,
@@ -323,7 +323,7 @@
             showToast("Подготовка всех билетов...");
             const tickets = document.querySelectorAll('.ticket-capture-area');
             for(let i=0; i<tickets.length; i++) {
-                await new Promise(r => setTimeout(r, 500)); // Увеличена задержка для корректного рендеринга
+                await new Promise(r => setTimeout(r, 600)); 
                 await downloadOne(tickets[i], i+1);
             }
             showToast("Все билеты скачаны!");
