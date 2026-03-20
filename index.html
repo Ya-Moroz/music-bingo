@@ -17,7 +17,7 @@
             padding: 0;
         }
         
-        /* Фиксированный формат А5 (524x744 px) */
+        /* Фиксированный вертикальный формат А5 (524x744 px) */
         .ticket-capture-area {
             width: 524px;
             height: 744px;
@@ -51,42 +51,43 @@
 
         /* Сетка с фиксированными размерами */
         .bingo-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 92px);
-            grid-template-rows: repeat(5, 86px);
-            gap: 4px;
-            width: 476px; 
-            justify-content: center;
+            display: block; /* Уходим от гридов для более жесткого контроля координат */
+            width: 466px; 
+            height: 441px;
             margin: 15px auto 0 auto;
+            position: relative;
         }
 
         .bingo-cell {
             background: white;
-            width: 92px;
-            height: 86px;
-            display: block; /* Блочный контейнер для стабильности */
-            padding: 0;
+            width: 90px;
+            height: 85px;
+            position: absolute; /* Жесткая привязка координат каждой ячейки */
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* Текст внутри ячейки с центровкой через абсолютное позиционирование */
+        .cell-text-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            padding: 0 6px;
+            text-align: center;
             box-sizing: border-box;
         }
 
-        /* Метод таблицы для идеального центрирования текста в html2canvas */
-        .cell-inner {
-            display: table;
-            width: 100%;
-            height: 100%;
-            table-layout: fixed;
-        }
-
         .cell-text {
-            display: table-cell;
-            vertical-align: middle;
-            text-align: center;
             font-size: 10px;
-            line-height: 1.15;
+            line-height: 1.1;
             font-weight: 700;
             color: #D12F22;
-            padding: 4px;
+            margin: 0;
+            padding: 0;
             word-wrap: break-word;
+            display: block;
         }
 
         .ticket-footer {
@@ -97,7 +98,7 @@
         .footer-icons {
             display: flex;
             justify-content: space-between;
-            margin-top: 15px;
+            margin-top: 20px;
             padding: 0 10px;
         }
 
@@ -141,7 +142,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-10 text-center">
             <h1 class="text-3xl font-extrabold text-slate-900 uppercase tracking-tighter">Генератор Музыкальной Лотереи</h1>
-            <p class="text-slate-500 mt-2">Фиксированный шаблон А5 (524x744 px)</p>
+            <p class="text-slate-500 mt-2">Версия с жестким позиционированием текста</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
@@ -160,8 +161,11 @@
                     <button onclick="generateAll()" class="w-full bg-slate-900 hover:bg-black text-white py-4 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> Сгенерировать
                     </button>
-                    <button onclick="downloadAsImages()" class="w-full border-2 border-slate-900 text-slate-900 hover:bg-slate-50 py-4 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                        <i data-lucide="download" class="w-4 h-4"></i> Скачать все (PNG)
+                    <button onclick="downloadAsImages('png')" class="w-full border-2 border-slate-900 text-slate-900 hover:bg-slate-50 py-4 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="image" class="w-4 h-4"></i> Скачать все (PNG)
+                    </button>
+                    <button onclick="downloadAsImages('jpeg')" class="w-full border-2 border-slate-900 text-slate-900 hover:bg-slate-50 py-4 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="camera" class="w-4 h-4"></i> Скачать все (JPEG)
                     </button>
                 </div>
             </div>
@@ -249,51 +253,56 @@
 
         function createGridData(id, playlist, dummies) {
             const grid = Array(25).fill(null);
+            const dums = shuffle([...dummies]);
             
-            if (id === 1) { // Победитель R1 (ровно на 15 песне)
-                const winLine = [0, 1, 2, 3, 4]; // Верхняя горизонталь
+            if (id === 1) { // Победитель R1
+                const winIndices = [0, 1, 2, 3, 4]; // Верхняя строка
                 const song15 = playlist[14];
-                const pool14 = shuffle([...playlist.slice(0, 14)]);
+                const poolBefore15 = shuffle([...playlist.slice(0, 14)]);
                 
-                grid[winLine[0]] = song15; // 15-я песня в линии
-                for(let i=1; i<5; i++) grid[winLine[i]] = pool14[i-1];
+                // Формируем победную линию
+                grid[winIndices[0]] = song15;
+                for(let i=1; i<5; i++) grid[winIndices[i]] = poolBefore15[i-1];
                 
-                fillOthers(grid, playlist.slice(15), dummies);
+                // Остальные ячейки заполняем ТОЛЬКО будущими песнями и пустышками
+                // Это гарантирует, что никакая другая линия не соберется до 15-й песни
+                fillRestStrictly(grid, playlist.slice(15), dummies);
             } 
-            else if (id === 2 || id === 3) { // Победители R2 (ровно на 30 песне)
-                const winLines = [0,1,2,3,4, 5,6,7,8,9]; // Две горизонтали
+            else if (id === 2 || id === 3) { // Победители R2
+                const winIndices = [0,1,2,3,4, 5,6,7,8,9]; // Две верхние строки
                 const song30 = playlist[29];
-                const pool29 = shuffle([...playlist.slice(0, 29)]);
+                const poolBefore30 = shuffle([...playlist.slice(0, 29)]);
                 
-                grid[winLines[0]] = song30;
-                for(let i=1; i<10; i++) grid[winLines[i]] = pool29[i-1];
-                
-                fillOthers(grid, playlist.slice(30), dummies);
+                grid[winIndices[0]] = song30;
+                for(let i=1; i<10; i++) grid[winIndices[i]] = poolBefore30[i-1];
+
+                fillRestStrictly(grid, playlist.slice(30), dummies);
             } 
-            else if (id === 4) { // Победитель R3 (ровно на 50 песне)
+            else if (id === 4) { // Победитель R3
                 const song50 = playlist[49];
-                const pool49 = shuffle([...playlist.slice(0, 49)]);
+                const poolBefore50 = shuffle([...playlist.slice(0, 49)]);
                 
                 grid[0] = song50;
-                for(let i=1; i<25; i++) grid[i] = pool49[i-1];
+                for(let i=1; i<25; i++) grid[i] = poolBefore50[i-1];
             } 
             else { // Проигрышные
                 const pool = shuffle([...playlist.slice(0, 50)]);
-                const dums = shuffle([...dummies]);
-                // Блокируем каждую возможную линию пустышкой
-                grid[0]=dums[0]; grid[6]=dums[1]; grid[12]=dums[2]; grid[18]=dums[3]; grid[24]=dums[4];
+                // Блокируем каждую линию пустышкой
+                const blockIdx = [0, 6, 12, 18, 24, 4, 8, 16, 20];
+                blockIdx.forEach((idx, i) => { if(dums[i]) grid[idx] = dums[i]; });
+
                 let pIdx = 0;
                 for(let i=0; i<25; i++) if(!grid[i]) grid[i] = pool[pIdx++];
             }
             return grid;
         }
 
-        function fillOthers(grid, poolSongs, dummies) {
-            // Чтобы в выигрышном билете случайно не собралась вторая линия раньше времени,
-            // забиваем пустые ячейки песнями из будущего (после 15/30) и пустышками.
-            const extra = shuffle([...poolSongs, ...dummies]);
-            let eIdx = 0;
-            for(let i=0; i<25; i++) if(!grid[i]) grid[i] = extra[eIdx++];
+        function fillRestStrictly(grid, futureSongs, dummies) {
+            const safePool = shuffle([...futureSongs, ...dummies]);
+            let sIdx = 0;
+            for(let i=0; i<25; i++) {
+                if(!grid[i]) grid[i] = safePool[sIdx++];
+            }
         }
 
         function renderTicketUI(num, data) {
@@ -307,7 +316,9 @@
             wrapper.innerHTML = `
                 <div class="p-3 flex justify-between items-center bg-slate-50 border-b">
                     <span class="text-[10px] font-bold uppercase text-slate-500">Билет №${num} <span class="text-indigo-600 ml-2">${meta}</span></span>
-                    <button onclick="downloadOne(this.parentElement.nextElementSibling.firstElementChild, ${num})" class="bg-indigo-600 text-white px-4 py-1 text-[9px] font-bold uppercase rounded">Скачать PNG</button>
+                    <div class="flex gap-2">
+                        <button onclick="downloadOne(this.parentElement.parentElement.nextElementSibling.firstElementChild, ${num}, 'png')" class="bg-indigo-600 text-white px-3 py-1 text-[9px] font-bold uppercase rounded">PNG</button>
+                    </div>
                 </div>
                 <div class="preview-wrapper">
                     <div id="capture-${num}" class="ticket-capture-area">
@@ -320,13 +331,19 @@
                         <h2 class="main-title">ЛОТЕРЕЯ</h2>
                         <div class="dotted-line"></div>
                         <div class="bingo-grid">
-                            ${data.map(song => `
-                                <div class="bingo-cell">
-                                    <div class="cell-inner">
-                                        <div class="cell-text">${song}</div>
+                            ${data.map((song, i) => {
+                                const row = Math.floor(i / 5);
+                                const col = i % 5;
+                                const top = row * (85 + 4);
+                                const left = col * (90 + 4);
+                                return `
+                                    <div class="bingo-cell" style="top: ${top}px; left: ${left}px;">
+                                        <div class="cell-text-container">
+                                            <p class="cell-text">${song}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                         <div class="ticket-footer">
                             <p class="text-[8px] font-black uppercase tracking-tighter text-center">СЛУШАЙ МУЗЫКУ, УГАДЫВАЙ ИСПОЛНИТЕЛЯ И ВЫЧЁРКИВАЙ НАЗВАНИЯ!</p>
@@ -343,7 +360,7 @@
             return wrapper;
         }
 
-        async function downloadOne(el, num) {
+        async function downloadOne(el, num, format) {
             try {
                 const canvas = await html2canvas(el, { 
                     scale: 2, 
@@ -352,22 +369,22 @@
                     backgroundColor: '#D12F22'
                 });
                 const link = document.createElement('a');
-                link.download = `билет_№${num}.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.download = `билет_№${num}.${format}`;
+                link.href = canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined);
                 link.click();
             } catch (err) {
                 showToast("Ошибка сохранения");
             }
         }
 
-        async function downloadAsImages() {
+        async function downloadAsImages(format) {
             showToast("Загрузка пошла...");
             const tickets = document.querySelectorAll('.ticket-capture-area');
             for(let i=0; i<tickets.length; i++) {
                 await new Promise(r => setTimeout(r, 1000)); 
-                await downloadOne(tickets[i], i+1);
+                await downloadOne(tickets[i], i+1, format);
             }
-            showToast("Все билеты загружены!");
+            showToast("Готово!");
         }
 
         window.onload = () => { initInputs(); generateAll(); };
