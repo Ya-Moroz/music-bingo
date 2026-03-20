@@ -8,10 +8,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.447.0/lucide.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap');
+        /* Подключаем шрифт Tektur */
+        @import url('https://fonts.googleapis.com/css2?family=Tektur:wght@400;600;900&display=swap');
         
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+            font-family: 'Tektur', sans-serif; 
             background-color: #f1f5f9; 
             margin: 0;
             padding: 0;
@@ -80,8 +81,9 @@
 
         .cell-text {
             font-size: 10px;
-            line-height: 1.1; /* Фикс для html2canvas */
-            font-weight: 700;
+            /* Tektur может требовать специфического line-height для центровки в canvas */
+            line-height: 1; 
+            font-weight: 600;
             color: #D12F22;
             word-wrap: break-word;
             width: 100%;
@@ -140,7 +142,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-10 text-center">
             <h1 class="text-3xl font-extrabold text-slate-900 uppercase tracking-tighter">Генератор Музыкальной Лотереи</h1>
-            <p class="text-slate-500 mt-2">Вертикальный А5 • Фикс центровки и логики выигрыша</p>
+            <p class="text-slate-500 mt-2">Шрифт: Tektur • Вертикальный А5</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
@@ -246,8 +248,9 @@
 
         function createGridData(id, playlist, dummies) {
             const grid = Array(25).fill(null);
+            const dums = shuffle([...dummies]);
             
-            if (id === 1) { // Победитель R1 (ровно на 15 песне)
+            if (id === 1) { // Победитель R1
                 const winIndices = [0, 1, 2, 3, 4];
                 const song15 = playlist[14];
                 const poolBefore15 = shuffle([...playlist.slice(0, 14)]);
@@ -255,12 +258,11 @@
                 grid[winIndices[0]] = song15;
                 for(let i=1; i<5; i++) grid[winIndices[i]] = poolBefore15[i-1];
                 
-                // Чтобы не выиграть случайно по другой линии, забиваем остальное только будущими песнями или пустышками
                 const safePool = shuffle([...playlist.slice(15), ...dummies]);
                 let sIdx = 0;
                 for(let i=0; i<25; i++) if(!grid[i]) grid[i] = safePool[sIdx++];
             } 
-            else if (id === 2 || id === 3) { // Победители R2 (ровно на 30 песне)
+            else if (id === 2 || id === 3) { // Победители R2
                 const winIndices = [0,1,2,3,4, 5,6,7,8,9];
                 const song30 = playlist[29];
                 const poolBefore30 = shuffle([...playlist.slice(0, 29)]);
@@ -272,7 +274,7 @@
                 let sIdx = 0;
                 for(let i=0; i<25; i++) if(!grid[i]) grid[i] = safePool[sIdx++];
             } 
-            else if (id === 4) { // Победитель R3 (ровно на 50 песне)
+            else if (id === 4) { // Победитель R3
                 const song50 = playlist[49];
                 const poolBefore50 = shuffle([...playlist.slice(0, 49)]);
                 
@@ -281,8 +283,6 @@
             } 
             else { // Проигрышные
                 const pool = shuffle([...playlist.slice(0, 50)]);
-                const dums = shuffle([...dummies]);
-                // Блокируем каждую возможную линию пустышкой
                 const blockIdx = [0, 6, 12, 18, 24, 4, 8, 16, 20];
                 blockIdx.forEach((idx, i) => { if(dums[i]) grid[idx] = dums[i]; });
                 let pIdx = 0;
@@ -349,8 +349,8 @@
             const clone = originalArea.cloneNode(true);
             ghostContainer.appendChild(clone);
             
-            // Даем время на отрисовку шрифтов в клоне
-            await new Promise(r => setTimeout(r, 100));
+            // Задержка для подгрузки шрифтов в клоне перед снимком
+            await new Promise(r => setTimeout(r, 200));
 
             try {
                 const canvas = await html2canvas(clone, { 
@@ -377,7 +377,7 @@
         async function downloadAsImages() {
             showToast("Загрузка пошла...");
             for(let i = 1; i <= 20; i++) {
-                await new Promise(r => setTimeout(r, 1000)); 
+                await new Promise(r => setTimeout(r, 1200)); 
                 await downloadOne(i);
             }
             showToast("Все билеты загружены!");
