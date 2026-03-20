@@ -11,17 +11,19 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap');
         
         body { 
-            font-family: 'Inter', sans-serif; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
             background-color: #f1f5f9; 
             margin: 0;
             padding: 0;
         }
         
-        /* Скрытый контейнер для идеального захвата без CLS */
+        /* Скрытый контейнер для захвата */
         #capture-ghost-container {
-            position: absolute;
+            position: fixed;
             left: -9999px;
             top: 0;
+            width: 524px;
+            z-index: -1;
         }
 
         /* Шаблон билета А5 (524x744 px) */
@@ -72,17 +74,20 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 5px;
+            padding: 6px;
             box-sizing: border-box;
         }
 
         .cell-text {
             font-size: 10px;
-            line-height: 1.2;
+            line-height: 1.1; /* Фикс для html2canvas */
             font-weight: 700;
             color: #D12F22;
             word-wrap: break-word;
             width: 100%;
+            display: block;
+            margin: 0;
+            padding: 0;
         }
 
         .ticket-footer {
@@ -135,7 +140,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-10 text-center">
             <h1 class="text-3xl font-extrabold text-slate-900 uppercase tracking-tighter">Генератор Музыкальной Лотереи</h1>
-            <p class="text-slate-500 mt-2">Фикс выравнивания и CLS при загрузке</p>
+            <p class="text-slate-500 mt-2">Вертикальный А5 • Фикс центровки и логики выигрыша</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
@@ -242,36 +247,42 @@
         function createGridData(id, playlist, dummies) {
             const grid = Array(25).fill(null);
             
-            if (id === 1) {
+            if (id === 1) { // Победитель R1 (ровно на 15 песне)
                 const winIndices = [0, 1, 2, 3, 4];
                 const song15 = playlist[14];
-                const pool14 = shuffle([...playlist.slice(0, 14)]);
+                const poolBefore15 = shuffle([...playlist.slice(0, 14)]);
+                
                 grid[winIndices[0]] = song15;
-                for(let i=1; i<5; i++) grid[winIndices[i]] = pool14[i-1];
-                // Забиваем остальное так, чтобы не было бинго до 15й песни
+                for(let i=1; i<5; i++) grid[winIndices[i]] = poolBefore15[i-1];
+                
+                // Чтобы не выиграть случайно по другой линии, забиваем остальное только будущими песнями или пустышками
                 const safePool = shuffle([...playlist.slice(15), ...dummies]);
                 let sIdx = 0;
                 for(let i=0; i<25; i++) if(!grid[i]) grid[i] = safePool[sIdx++];
             } 
-            else if (id === 2 || id === 3) {
+            else if (id === 2 || id === 3) { // Победители R2 (ровно на 30 песне)
                 const winIndices = [0,1,2,3,4, 5,6,7,8,9];
                 const song30 = playlist[29];
-                const pool29 = shuffle([...playlist.slice(0, 29)]);
+                const poolBefore30 = shuffle([...playlist.slice(0, 29)]);
+                
                 grid[winIndices[0]] = song30;
-                for(let i=1; i<10; i++) grid[winIndices[i]] = pool29[i-1];
+                for(let i=1; i<10; i++) grid[winIndices[i]] = poolBefore30[i-1];
+
                 const safePool = shuffle([...playlist.slice(30), ...dummies]);
                 let sIdx = 0;
                 for(let i=0; i<25; i++) if(!grid[i]) grid[i] = safePool[sIdx++];
             } 
-            else if (id === 4) {
+            else if (id === 4) { // Победитель R3 (ровно на 50 песне)
                 const song50 = playlist[49];
-                const pool49 = shuffle([...playlist.slice(0, 49)]);
+                const poolBefore50 = shuffle([...playlist.slice(0, 49)]);
+                
                 grid[0] = song50;
-                for(let i=1; i<25; i++) grid[i] = pool49[i-1];
+                for(let i=1; i<25; i++) grid[i] = poolBefore50[i-1];
             } 
-            else {
+            else { // Проигрышные
                 const pool = shuffle([...playlist.slice(0, 50)]);
                 const dums = shuffle([...dummies]);
+                // Блокируем каждую возможную линию пустышкой
                 const blockIdx = [0, 6, 12, 18, 24, 4, 8, 16, 20];
                 blockIdx.forEach((idx, i) => { if(dums[i]) grid[idx] = dums[i]; });
                 let pIdx = 0;
@@ -282,7 +293,7 @@
 
         function renderTicketUI(num, data) {
             const wrapper = document.createElement('div');
-            wrapper.className = "bg-white border border-slate-200 mb-4";
+            wrapper.className = "bg-white border border-slate-200 mb-4 shadow-sm";
             let meta = "";
             if(num === 1) meta = "Выиграет на 15-й песне";
             if(num === 2 || num === 3) meta = "Выиграет на 30-й песне";
@@ -290,8 +301,8 @@
 
             wrapper.innerHTML = `
                 <div class="p-3 flex justify-between items-center bg-slate-50 border-b">
-                    <span class="text-[10px] font-bold uppercase text-slate-500">Билет №${num} <span class="text-indigo-600 ml-2">${meta}</span></span>
-                    <button onclick="downloadOne(${num})" class="bg-indigo-600 text-white px-4 py-1 text-[9px] font-bold uppercase rounded">Скачать PNG</button>
+                    <span class="text-[10px] font-bold uppercase text-slate-500">Билет №${num} <span class="text-indigo-600 ml-2 font-black">${meta}</span></span>
+                    <button onclick="downloadOne(${num})" class="bg-indigo-600 text-white px-4 py-1 text-[9px] font-bold uppercase rounded">PNG</button>
                 </div>
                 <div class="preview-wrapper">
                     ${createTicketHTML(num, data)}
@@ -335,21 +346,22 @@
             const originalArea = document.getElementById(`ticket-area-${num}`);
             const ghostContainer = document.getElementById('capture-ghost-container');
             
-            // Клонируем элемент в скрытый контейнер наверху страницы
             const clone = originalArea.cloneNode(true);
             ghostContainer.appendChild(clone);
             
+            // Даем время на отрисовку шрифтов в клоне
+            await new Promise(r => setTimeout(r, 100));
+
             try {
                 const canvas = await html2canvas(clone, { 
                     scale: 2, 
                     logging: false, 
                     useCORS: true,
                     backgroundColor: '#D12F22',
-                    // Важно: координаты (0,0) так как клон в начале ghost-контейнера
-                    x: 0,
-                    y: 0,
                     width: 524,
-                    height: 744
+                    height: 744,
+                    x: 0,
+                    y: 0
                 });
                 const link = document.createElement('a');
                 link.download = `билет_№${num}.png`;
@@ -364,11 +376,8 @@
 
         async function downloadAsImages() {
             showToast("Загрузка пошла...");
-            const playlist = Array.from(document.querySelectorAll('.song-input')).map(i => i.value.trim()).filter(v => v);
-            const dummies = Array.from(document.querySelectorAll('.dummy-input')).map(i => i.value.trim()).filter(v => v);
-            
             for(let i = 1; i <= 20; i++) {
-                await new Promise(r => setTimeout(r, 600)); 
+                await new Promise(r => setTimeout(r, 1000)); 
                 await downloadOne(i);
             }
             showToast("Все билеты загружены!");
