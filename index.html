@@ -40,25 +40,24 @@
             align-items: center;      /* Вертикальное центрирование */
             justify-content: center;   /* Горизонтальное центрирование */
             text-align: center;
-            padding: 6px;
+            padding: 0 6px;            /* Убираем вертикальный паддинг для точности */
             width: 132px;
             height: 64px;
             background: #fff;
             overflow: hidden;
             box-sizing: border-box;
-            position: relative;
         }
 
         .bingo-cell span {
             font-size: 10px;
-            line-height: 1.2;
+            line-height: 1.1;         /* Фиксированный интервал */
             font-weight: 600;
             color: #1e293b;
             word-wrap: break-word;
             width: 100%;
-            margin: auto; /* Помогает html2canvas с центровкой внутри flex */
             display: block;
-            max-height: 52px; /* Ограничение высоты текста внутри ячейки */
+            margin: 0;                /* Убираем margin auto для стабильности в canvas */
+            padding: 0;
         }
 
         /* Контейнер для предпросмотра на сайте */
@@ -324,7 +323,7 @@
             showToast("Подготовка всех билетов...");
             const tickets = document.querySelectorAll('.ticket-capture-area');
             for(let i=0; i<tickets.length; i++) {
-                await new Promise(r => setTimeout(r, 400));
+                await new Promise(r => setTimeout(r, 500)); // Увеличена задержка для корректного рендеринга
                 await downloadOne(tickets[i], i+1);
             }
             showToast("Все билеты скачаны!");
