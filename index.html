@@ -77,11 +77,12 @@
             text-align: center;
             padding: 6px;
             box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
         }
 
         .cell-text {
             font-size: 10px;
-            /* Tektur может требовать специфического line-height для центровки в canvas */
             line-height: 1; 
             font-weight: 600;
             color: #D12F22;
@@ -90,6 +91,9 @@
             display: block;
             margin: 0;
             padding: 0;
+            position: relative;
+            /* В UI оставляем небольшое смещение, если нужно */
+            top: 0px; 
         }
 
         .ticket-footer {
@@ -142,7 +146,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-10 text-center">
             <h1 class="text-3xl font-extrabold text-slate-900 uppercase tracking-tighter">Генератор Музыкальной Лотереи</h1>
-            <p class="text-slate-500 mt-2">Шрифт: Tektur • Вертикальный А5</p>
+            <p class="text-slate-500 mt-2">Шрифт: Tektur • Фикс смещения текста при скачивании</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
@@ -320,7 +324,7 @@
                         <span>БИЛЕТ №${num}</span>
                     </div>
                     <div class="dotted-line"></div>
-                    <h2 class="main-title">ЛОТЕРЕЯ</h2>
+                    <h2 class="main-title">Л О Т Е Р ЕЯ</h2>
                     <div class="dotted-line"></div>
                     <div class="bingo-grid">
                         ${data.map(song => `
@@ -349,8 +353,16 @@
             const clone = originalArea.cloneNode(true);
             ghostContainer.appendChild(clone);
             
-            // Задержка для подгрузки шрифтов в клоне перед снимком
-            await new Promise(r => setTimeout(r, 200));
+            // Принудительная корректировка текста в клоне для компенсации сползания в html2canvas
+            const cellTexts = clone.querySelectorAll('.cell-text');
+            cellTexts.forEach(span => {
+                span.style.position = 'relative';
+                // Поднимаем текст на 4-5 пикселей (примерно половина высоты строки), чтобы компенсировать ошибку baseline
+                span.style.top = '-4px'; 
+            });
+            
+            // Ждем завершения отрисовки шрифтов
+            await new Promise(r => setTimeout(r, 300));
 
             try {
                 const canvas = await html2canvas(clone, { 
